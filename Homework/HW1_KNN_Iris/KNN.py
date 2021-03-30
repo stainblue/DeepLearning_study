@@ -17,7 +17,11 @@ class KNN:
         # 결과적으로 (15, ) 형태의 결과값을 리턴할 수 있게 한다.
         return np.sqrt(np.sum((self.X - X_test)**2, axis=1))
     
+    # X_test와 가까운 K개의 이웃의 클래스와 그 이웃과의 거리를 리턴한다.
     def obtain_k_nearest_neighbor(self, X_test):
+        # X_test와 X_train들 사이의 거리를 구한다. 
+        # X_train은 클래스 생성자에서 받고있고, (15, 4)의 형태를 갖는다. (15개의 훈련 데이터를 넣는다는 가정)
+        # X_test는 (4, )의 형태를 갖는다.
         calculated_distance = self.calculate_distance(X_test)
         
         # calculated_distance 를 굳이 모두 정렬할 필요 없이, 가장 값이 작은 (거리가 가까운) 점을 self.K 개를 구하면 된다.
@@ -32,29 +36,36 @@ class KNN:
 
         return k_neighbors_class, k_neighbors_distance
         
+    def obtain_majority_vote(self, X_test):
+        # X_test 와 가장 가까운 k개의 이웃을 구한다.
+        neighbors, distance = self.obtain_k_nearest_neighbor(X_test)
+
+        # neighbors에는 X_test와 가까운 K개의 이웃의 클래스가 들어있다.
+        # 이중 가장 많이 나온 클래스를 X_test의 클래스로 예측한다.
+
+        # 가장 많이 나온 클래스를 구하기 위해 vote라는 넘파이 배열을 생성한다.
+        # vote의 index는 class를 뜻하고, value는 neighbors에 해당 class가 나온 횟수이다.
+        vote = np.zeros(neighbors.max() + 1)
+        for i in range(neighbors.size):
+            vote[neighbors[i]] += 1
+
+        # vote에서 값이 가장 큰 index(=class) 를 리턴한다.
+        return np.argmax(vote)
         
     def obtain_weighted_majority_vote(self, X_test):
-        return
+        # X_test 와 가장 가까운 k개의 이웃을 구한다.
+        neighbors, distance = self.obtain_k_nearest_neighbor(X_test)
+        
+        # neighbors에는 X_test와 가까운 K개의 이웃의 클래스가 들어있다.
+        # 이중 가장 많이 나온 클래스를 X_test의 클래스로 예측한다.
 
-    def obtain_majority_vote(self, X_test):
-        return
-    
-
-from sklearn.datasets import load_iris
-
-iris = load_iris()
-# print(iris)
-
-X = iris.data       # iris data input
-y = iris.target     # iris target (label)
-y_name = iris.target_names # iris target name
-
-X_train, y_train = X[:15], y[:15]
-X_test, y_test = X[15], y[15]
-print("X_train : " + str(X_train))
-print("y_train : " + str(y_train))
-print("X_test : " + str(X_test))
-print("y_test : " + str(y_test))
-
-classifier = KNN(3, X_train, y_train)
-classifier.obtain_k_nearest_neighbor(X_test)
+        # 넘파이 배열 weighted_vote를 생성한다.
+        # obtain_majority_vote 메소드의 vote 배열과 다른점은, 
+        # 각 이웃까지의 거리를 사용해 가중치를 적용했다는 점 이다.
+        weighted_vote = np.zeros(neighbors.max() + 1)
+        for i in range(neighbors.size):
+            # 여기서는 가중치를 거리에 반비례하도록 구현했다.
+            weighted_vote[neighbors[i]] += 1 / distance[i]
+        
+        return np.argmax(weighted_vote)
+        
