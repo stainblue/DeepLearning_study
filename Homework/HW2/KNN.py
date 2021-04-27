@@ -66,6 +66,7 @@ class KNN:
         weighted_vote = np.zeros(neighbors.max() + 1)
         for i in range(neighbors.size):
             # 여기서는 가중치를 거리에 반비례하도록 구현했다.
-            weighted_vote[neighbors[i]] += 1 / distance[i]
+            # divide by zero 방지하기 위해 아주 미세한 값을 분모에 더했다.
+            weighted_vote[neighbors[i]] += 1 / (distance[i] + 1e-7)
         
         return np.argmax(weighted_vote)
