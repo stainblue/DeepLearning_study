@@ -8,10 +8,6 @@ from KNN import KNN
 # mnist data load할 수 있는 함수 import
 from dataset.mnist import load_mnist
 
-# # python image processing library
-# # python 버전 3.x 에서는 pillow package install해서 사용
-# from PIL import Image
-
 # Hand-craft function
 def handCraft(x):
     # 시간 측정을 위한 타이머
@@ -33,14 +29,11 @@ def handCraft(x):
             temp.append(count_ji)
         x_handCrafted.append(temp)
     
-    print("# hand craft processing time : {}".format(time.perf_counter() - start))
+    print("# hand craft processing time : {}s".format(time.perf_counter() - start))
     return np.array(x_handCrafted)
 
-
-# 784개의 input을 그대로 사용하여 분류 테스트
-def test_original_input(K, X_train, y_train, X_test, y_test, y_name, sample):
-    print("\n# Test : input feature : original(784 features)")
-
+# 테스트 함수 선언
+def Test(K, X_train, y_train, X_test, y_test, y_name, sample):
     # 시간 측정을 위한 타이머
     start = time.perf_counter()
     # KNN 알고리즘을 사용하는 분류기 생성
@@ -57,33 +50,8 @@ def test_original_input(K, X_train, y_train, X_test, y_test, y_name, sample):
     
     end = time.perf_counter()
     print("accuracy = {}".format(accurate_count / sample.size))
-    print("sample size: {sample_size}, K: {k}, performance time: {time}".format(sample_size=sample.size, k=K, time=(end - start)))
-        
+    print("sample size: {sample_size}, K: {k}, performance time: {time}s".format(sample_size=sample.size, k=K, time=(end - start)))
 
-def test_handCrafted_input(K, X_train, y_train, X_test, y_test, y_name, sample):
-    print("\n# Test : input feature : hand crafted")
-
-    # feature hand craft
-    X_train = handCraft(X_train)
-    X_test = handCraft(X_test)
-
-    #시간 측정을 위한 타이머
-    start = time.perf_counter()
-    # KNN 알고리즘을 사용하는 분류기 생성
-    classifier = KNN(K, X_train, y_train)
-
-    # weighted_majority_vote를 사용한 분류 결과 계산 및 출력
-    # accuracy 계산을 위해 정답을 맞춘 횟수를 저장
-    accurate_count = 0
-    for i in sample:
-        computed_class = classifier.obtain_weighted_majority_vote(X_test[i])
-        print("{index} th data\tresult {result}\tlabel {label}".format(index=i, result=y_name[computed_class], label=y_name[y_test[i]]))
-        if (computed_class == y_test[i]):
-            accurate_count += 1
-    
-    end = time.perf_counter()
-    print("accuracy = {}".format(accurate_count / sample.size))
-    print("sample size: {sample_size}, K: {k}, performance time: {time}".format(sample_size=sample.size, k=K, time=(end - start)))
 
 # training data, test data
 # flatten: 이미지를 1차원 배열로 읽음
@@ -96,11 +64,19 @@ def test_handCrafted_input(K, X_train, y_train, X_test, y_test, y_name, sample):
 (x_train, t_train), (x_test, t_test) = (x_train.astype(np.int32), t_train.astype(np.int32)), (x_test.astype(np.int32), t_test.astype(np.int32))
 
 # test data 10,000개 중 일부를 랜덤하게 샘플링해서 사용
-size = 5
+size = 100
 sample = np.random.randint(0, t_test.shape[0], size)
 
 # KNN의 3번째 파라미터(label의 이름)으로 다음의 리스트 사용
 label_name = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
-test_original_input(5, x_train, t_train, x_test, t_test, label_name, sample)
-test_handCrafted_input(5, x_train, t_train, x_test, t_test, label_name, sample)
+
+# 테스트
+x_handCrafted_train = handCraft(x_train)
+x_handCrafted_test = handCraft(x_test)
+for k in [1, 3, 5, 10, 15, 20]:
+    print("\n# Test : K = {}, input feature = original(784 features)".format(k))
+    Test(k, x_train, t_train, x_test, t_test, label_name, sample)
+    
+    print("\n# Test : K = {}, input feature = hand crafted".format(k))
+    Test(k, x_handCrafted_train, t_train, x_handCrafted_test, t_test, label_name, sample)
