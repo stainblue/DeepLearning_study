@@ -11,18 +11,18 @@ class KNN:
         self.y = y_train
 
     def calculate_distance(self, X_test):
-        # 여기서 self.X.shape = (# of train data, # of feature) = (# of train data, 4) 이고, X_shape = (# of feature, ) = (4, ) 이다. 
-        # 따라서 self.X - X_test 를 계산할 때, X_shape가 (# of train data, 4)의 형태로 확장되어 계산된다.
+        # 여기서 self.X.shape = (# of train data, # of feature) 이고, X_shape = (# of feature, ) 이다. 
+        # 따라서 self.X - X_test 를 계산할 때, X_shape가 (# of train data, # of feature)의 형태로 확장되어 계산된다.
         # X_test로부터 다른 각 X_train으로의 거리를 구해야하기 때문에, np.sum()을 계산할 때 axis=1 옵션을 주어 
-        # # of train data x 4 의 숫자의 합을 구하는 것이 아닌, 4개의 숫자의 합을 # of train data번 구할 수 있게 한다.
+        # # of train data x # of feature 의 숫자의 합을 구하는 것이 아닌, # of feature 의 숫자의 합을 # of train data번 구할 수 있게 한다.
         # 결과적으로 (# of train data, ) 형태의 결과값을 리턴할 수 있게 한다.
         return np.sqrt(np.sum((self.X - X_test)**2, axis=1))
     
     # X_test와 가까운 K개의 이웃의 클래스와 그 이웃과의 거리를 리턴한다.
     def obtain_k_nearest_neighbor(self, X_test):
         # X_test와 X_train들 사이의 거리를 구한다. 
-        # X_train은 클래스 생성자에서 받고있고, (# of train data, 4)의 형태를 갖는다.
-        # X_test는 (4, )의 형태를 갖는다.
+        # X_train은 클래스 생성자에서 받고있고, (# of train data, # of feature)의 형태를 갖는다.
+        # X_test는 (# of feature, )의 형태를 갖는다.
         calculated_distance = self.calculate_distance(X_test)
         
         # calculated_distance 를 굳이 모두 정렬할 필요 없이, 가장 값이 작은 (거리가 가까운) 점을 self.K 개를 구하면 된다.
