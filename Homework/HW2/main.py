@@ -8,8 +8,13 @@ from KNN import KNN
 # mnist data load할 수 있는 함수 import
 from dataset.mnist import load_mnist
 
+# 로그 파일 마지막에 출력할 요약문 저장할 변수
+logs = []
+
 # Hand-craft function
-def handCraft(x):
+# 과제 설명 pdf에 소개되어있는 방식
+# 각 행/열 에서 배경이 아닌 숫자에 해당하는 픽셀 수를 feature로 잡는다.
+def handCraft_default(x):
     # 시간 측정을 위한 타이머
     start = time.perf_counter()
 
@@ -29,8 +34,36 @@ def handCraft(x):
             temp.append(count_ji)
         x_handCrafted.append(temp)
     
-    print("# hand craft processing time : {}s".format(time.perf_counter() - start))
+    print("# hand craft (default) processing time : {}s".format(time.perf_counter() - start))
+    logs.append("# hand craft (default) processing time : {}s".format(time.perf_counter() - start))
     return np.array(x_handCrafted)
+
+# Hand-craft function
+# 다른 방법으로 시도한 방법
+# 4픽셀씩 묶어 그 합을 feature로 잡는다.
+def handCraft_my(x):
+    # 시간 측정을 위한 타이머
+    start = time.perf_counter()
+
+    x_handCrafted = []
+    for xi in x:
+        temp = []
+        x_reshaped = xi.reshape(28, 28)
+
+        for ki in range(7):
+            for kj in range(7):
+                sum = 0
+                for i in range(4):
+                    for j in range(4):
+                        sum += x_reshaped[4 * ki + i][4 * kj + j]
+                
+                temp.append(sum)
+        x_handCrafted.append(temp)
+    
+    print("# hand craft (my) processing time : {}s".format(time.perf_counter() - start))
+    logs.append("# hand craft (my) processing time : {}s".format(time.perf_counter() - start))
+    return np.array(x_handCrafted)
+
 
 # 테스트 함수 선언
 def Test(K, X_train, y_train, X_test, y_test, y_name, sample):
@@ -51,7 +84,10 @@ def Test(K, X_train, y_train, X_test, y_test, y_name, sample):
     end = time.perf_counter()
     print("accuracy = {}".format(accurate_count / sample.size))
     print("sample size: {sample_size}, K: {k}, performance time: {time}s".format(sample_size=sample.size, k=K, time=(end - start)))
+    logs.append("accuracy: {accuracy}, performance time: {time}s".format(accuracy=(accurate_count / sample.size), time=(end - start)))
 
+
+# 여기부터 테스트 실행 관련
 
 # training data, test data
 # flatten: 이미지를 1차원 배열로 읽음
@@ -63,20 +99,36 @@ def Test(K, X_train, y_train, X_test, y_test, y_name, sample):
 # 따라서 실행상 계산의 편의를 위해 int32 타입으로 형변환 해준다.
 (x_train, t_train), (x_test, t_test) = (x_train.astype(np.int32), t_train.astype(np.int32)), (x_test.astype(np.int32), t_test.astype(np.int32))
 
-# test data 10,000개 중 일부를 랜덤하게 샘플링해서 사용
-size = 100
-sample = np.random.randint(0, t_test.shape[0], size)
-
 # KNN의 3번째 파라미터(label의 이름)으로 다음의 리스트 사용
 label_name = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
 
-# 테스트
-x_handCrafted_train = handCraft(x_train)
-x_handCrafted_test = handCraft(x_test)
-for k in [1, 3, 5, 10, 15, 20]:
-    print("\n# Test : K = {}, input feature = original(784 features)".format(k))
-    Test(k, x_train, t_train, x_test, t_test, label_name, sample)
-    
-    print("\n# Test : K = {}, input feature = hand crafted".format(k))
-    Test(k, x_handCrafted_train, t_train, x_handCrafted_test, t_test, label_name, sample)
+# 과제 pdf에서 제공하는 handcraft함수로 feature 축소
+x_handCrafted_default_train = handCraft_default(x_train)
+x_handCrafted_default_test = handCraft_default(x_test)
+
+# 직접 구현한 handcraft함수로 feature 축소
+x_handCrafted_my_train = handCraft_my(x_train)
+x_handCrafted_my_test = handCraft_my(x_test)
+
+for sample_size in [100, 1000]:
+    # test data 10,000개 중 일부를 랜덤하게 샘플링해서 사용
+    sample = np.random.randint(0, t_test.shape[0], sample_size)
+
+    for k in [1, 3, 5, 7, 10, 20]:
+        print("\n# Test : sample_size = {SS}, K = {K}, input feature = original(784 features)".format(SS=sample_size, K=k))
+        logs.append("\n# Test : sample_size = {SS}, K = {K}, input feature = original(784 features)".format(SS=sample_size, K=k))
+        Test(k, x_train, t_train, x_test, t_test, label_name, sample)
+
+        print("\n# Test : sample_size = {SS}, K = {K}, input feature = hand crafted (default)".format(SS=sample_size, K=k))
+        logs.append("\n# Test : sample_size = {SS}, K = {K}, input feature = hand crafted (default)".format(SS=sample_size, K=k))
+        Test(k, x_handCrafted_default_train, t_train, x_handCrafted_default_test, t_test, label_name, sample)
+
+        print("\n# Test : sample_size = {SS}, K = {K}, input feature = hand crafted (my)".format(SS=sample_size, K=k))
+        logs.append("\n# Test : sample_size = {SS}, K = {K}, input feature = hand crafted (my)".format(SS=sample_size, K=k))
+        Test(k, x_handCrafted_my_train, t_train, x_handCrafted_my_test, t_test, label_name, sample)
+
+
+print("-------------------------summary-------------------------")
+for log in logs:
+    print(log)
