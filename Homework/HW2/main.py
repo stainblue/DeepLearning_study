@@ -40,7 +40,7 @@ def handCraft_default(x):
 
 # Hand-craft function
 # 다른 방법으로 시도한 방법
-# 4픽셀씩 묶어 그 합을 feature로 잡는다.
+# 16(4x4)픽셀씩 묶어 그 합을 feature로 잡는다.
 def handCraft_my(x):
     # 시간 측정을 위한 타이머
     start = time.perf_counter()
